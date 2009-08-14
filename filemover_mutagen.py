@@ -1,11 +1,6 @@
 import os, sys, shutil, time, id3
 from os.path import join
 
-# This is from Mark Pilgrim's fileinfo_fromdict module
-def stripnulls(data):
-    "strip whitespace and nulls"
-    return data.replace("\00", " ").strip()
-
 class FileInfo(dict):
     "store file metadata"
     def __init__(self, filename=None):
@@ -95,34 +90,44 @@ class AUDIOMover(fileMover):
 
     def fileMove(self, dir, delsrc=False):
         "Move files in self.fileList to dir"
-        if delsrc == True:
-            for fObject in self.fileList:
-                try:
-                    shutil.move(fObject['name'],
-                                join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
-                except IOError:
-                    try:
-                        os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
-                    except WindowsError:
-                        pass
-                    shutil.move(fObject['name'],
-                                join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
-        else:
-            for fObject in self.fileList:
-                if 'title' in fObject.keys():
-                    try:
-                        shutil.copy2(fObject['name'], join(dir,str(fObject.get('artist')),
-                                                           str(fObject.get('album')),
-                                                           "".join((str(fObject.get('title')),
-                                                                         str(os.path.splitext(fObject['name'])[1])))))
-                    except IOError:
-                        print "Failed to copy, title"
-                else:
-                    try:
-                        shutil.copy2(fObject['name'], join(dir,str(fObject.get('artist')),
-                                                           str(fObject.get('album')),str(fObject.get('artist'))))
-                    except IOError:
-                        print "Failed to copy, no title"
+        move = delsrc and shutil.move or shutil.copy2
+        for fObject in self.fileList:
+            try: move(fObject['name'],
+                      join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+            except IOError:
+                try: os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+                except WindowsError: pass
+                move(fObject['name'],
+                      join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+                # The above block should make the commented code obsolete...
+##        if delsrc == True:
+##            for fObject in self.fileList:
+##                try:
+##                    shutil.move(fObject['name'],
+##                                join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##                except IOError:
+##                    try:
+##                        os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##                    except WindowsError:
+##                        pass
+##                    shutil.move(fObject['name'],
+##                                join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##        else:
+##            for fObject in self.fileList:
+##                if 'title' in fObject.keys():
+##                    try:
+##                        shutil.copy2(fObject['name'], join(dir,str(fObject.get('artist')),
+##                                                           str(fObject.get('album')),
+##                                                           "".join((str(fObject.get('title')),
+##                                                                         str(os.path.splitext(fObject['name'])[1])))))
+##                    except IOError:
+##                        print "Failed to copy, title"
+##                else:
+##                    try:
+##                        shutil.copy2(fObject['name'], join(dir,str(fObject.get('artist')),
+##                                                           str(fObject.get('album')),str(fObject.get('artist'))))
+##                    except IOError:
+##                        print "Failed to copy, no title"
 
     def fileMoveAlbum(self, dir):
         "Move files in self.fileList to dir"
@@ -165,9 +170,9 @@ class AUDIOMover(fileMover):
 def yesOrNo(prompt):
     """Takes a prompt for a y/n answer"""
     answer = restrictedInput(prompt, 'Y', 'y', 'N', 'n')
-    if answer in ('Y', 'y'):
+    if answer.Upper() == 'Y':
         return True
-    elif answer in ('N', 'n'):
+    elif answer.Upper() == 'N':
         return False
 
 def restrictedInput(prompt, *outputs):
