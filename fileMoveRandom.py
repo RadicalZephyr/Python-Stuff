@@ -25,3 +25,11 @@ def fileMove(self, dir, delsrc=False, *orgOptions):
 # Should look up example usages of optional parameter function handling...
 for x in range(-1, -len(orgOptions), -1):
     	str = join(str, orgOptions[x])
+
+
+self["album"] = self.get("TALB")
+
+self["title"] = self.get("TIT2")
+
+self["artist"] = self.get("TPE1") or self.get("TPE2")
+self["tracknum"] = self.get("TRCK")

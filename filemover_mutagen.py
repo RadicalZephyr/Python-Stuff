@@ -1,24 +1,11 @@
 import os, sys, shutil, time, id3
 from os.path import join
 
+# This is from Mark Pilgrim's Diveintopython
 class FileInfo(dict):
     "store file metadata"
     def __init__(self, filename=None):
         self["name"] = filename
-    
-class MP3FileInfo(id3.ID3):
-    def __init__(self, *args, **kwargs):
-        id3.ID3.__init__()
-        
-
-class M4AFileInfo(id3.ID3):
-    def __init__(self, *args, **kwargs):
-        id3.ID3.__init__()
-
-class MP4FileInfo(id3.ID3):
-    def __init__(self, *args, **kwargs):
-        id3.ID3.__init__()
-        
 
 def listDirectory(directory, fileExtList):
     "get list of file info objects for files of particular extensions"
@@ -33,8 +20,27 @@ def listDirectory(directory, fileExtList):
     return [getFileInfoClass(f)(f) for f in fileList]
 
 # From here down is my own work.
+class ID3FileInfo(id3.ID3):
+    def __init__(self, *args, **kwargs):
+        id3.ID3.__init__(args, kwargs)
+        self["name"] = args[0]
+        self["album"] = self.get("TALB")
+        self["title"] = self.get("TIT2")
+        self["artist"] = self.get("TPE1") or self.get("TPE2")
+        self["tracknum"] = self.get("TRCK")
+
+class MP3FileInfo(ID3FileInfo):
+    pass
+
+class M4AFileInfo(ID3FileInfo):
+    pass
+
+class MP4FileInfo(ID3FileInfo):
+    pass
+
 def getExtList(ftype):
-    if str(ftype).startswith('.'): # If it's a string of a single filetype return a list
+    if str(ftype).startswith('.'): 
+# If it's a string of a single filetype return a list
         return [ftype]
     elif str(ftype).startswith('['): # If it's a list, return the list
         return ftype
@@ -104,28 +110,34 @@ class AUDIOMover(fileMover):
 ##            for fObject in self.fileList:
 ##                try:
 ##                    shutil.move(fObject['name'],
-##                                join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##                                join(dir,str(fObject.get('artist')),
+##                                     str(fObject.get('album'))))
 ##                except IOError:
 ##                    try:
-##                        os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##                        os.makedirs(join(dir,str(fObject.get('artist')),
+##                                         str(fObject.get('album'))))
 ##                    except WindowsError:
 ##                        pass
 ##                    shutil.move(fObject['name'],
-##                                join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##                                join(dir,str(fObject.get('artist')),
+##                                     str(fObject.get('album'))))
 ##        else:
 ##            for fObject in self.fileList:
 ##                if 'title' in fObject.keys():
 ##                    try:
-##                        shutil.copy2(fObject['name'], join(dir,str(fObject.get('artist')),
-##                                                           str(fObject.get('album')),
-##                                                           "".join((str(fObject.get('title')),
-##                                                                         str(os.path.splitext(fObject['name'])[1])))))
+##                        shutil.copy2(fObject['name'], 
+##                                     join(dir,str(fObject.get('artist')),
+##                                                   str(fObject.get('album')),
+##                                                   "".join((str(fObject.get('title')),
+##                                                   str(os.path.splitext(fObject['name'])[1])))))
 ##                    except IOError:
 ##                        print "Failed to copy, title"
 ##                else:
 ##                    try:
-##                        shutil.copy2(fObject['name'], join(dir,str(fObject.get('artist')),
-##                                                           str(fObject.get('album')),str(fObject.get('artist'))))
+##                        shutil.copy2(fObject['name'], 
+##                                     join(dir,str(fObject.get('artist')),
+##                                                  str(fObject.get('album')),
+##                                                  str(fObject.get('artist'))))
 ##                    except IOError:
 ##                        print "Failed to copy, no title"
 
@@ -152,13 +164,17 @@ class AUDIOMover(fileMover):
             "Check if songs that have their own folder really should"
             self.albumList = []
             for fObject in self.albumCrossList:
-                self.albumList.append(fObject.get('album')) # Create a list of album names to cross check
+                self.albumList.append(fObject.get('album')) 
+# Create a list of album names to cross check
             self.albumCrossList.sort()
             for item in self.albumList:
-                if not self.albumList.count(item) > 1:  # Unless there's more than one reference to that album
-                    self.albumList.remove(item)         # get rid of it.
+                if not self.albumList.count(item) > 1:  
+# Unless there's more than one reference to that album
+                    self.albumList.remove(item)         
+# get rid of it.
             for fObject in self.albumCrossList:
-                if fObject.get('album') not in self.albumList:  # Update the file object list to reflect album cross referencing
+                if fObject.get('album') not in self.albumList:  
+# Update the file object list to reflect album cross referencing
                     self.albumCrossList.remove(fObject)
         albumCrossCheck()
 
@@ -176,7 +192,8 @@ def yesOrNo(prompt):
         return False
 
 def restrictedInput(prompt, *outputs):
-    """Take a prompt and list of acceptable inputs, only returns user's input when they enter something valid"""
+    """Take a prompt and list of acceptable inputs, only returns user's 
+       input when they enter something valid"""
     while True:
         answer = raw_input(prompt)
         if answer in outputs:
@@ -204,9 +221,10 @@ if __name__ == "__main__":
             dest = os.path.normpath(raw_input("Input destination folder path: "))
             delchoice = yesOrNo("Delete old files?")
             amove.fileFind(source)
-    #        amove.makeNewDir(dest)
+##            amove.makeNewDir(dest)
             amove.fileMove(dest, delchoice)
-            print "%d files were moved from %s to %s" % (len(amove.fileList), source, dest)
+            print "%d files were moved from %s to %s" % 
+            (len(amove.fileList), source, dest)
             print '\n' * 3
         elif menuChoice == '2':
             root = os.path.normpath(raw_input("Input folder to check albums of: "))
