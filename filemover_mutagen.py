@@ -94,18 +94,21 @@ class AUDIOMover(fileMover):
 #            except WindowsError:
 #                pass
 
-    def fileMove(self, dir, delsrc=False):
+    def fileMove(self, dir, delsrc=False, organization=["artist", "album"]):
         "Move files in self.fileList to dir"
-        move = delsrc and shutil.move or shutil.copy2
+        move = delsrc and shutil.move or shutil.copy
+
         for fObject in self.fileList:
-            try: move(fObject['name'],
-                      join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+            for str in organization:
+                dir = join(dir, str)
+
+            try: move(fObject['name'], dir)
             except IOError:
-                try: os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+                try: os.makedirs(dir)
                 except WindowsError: pass
-                move(fObject['name'],
-                      join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
-                # The above block should make the commented code obsolete...
+                move(fObject['name'], dir)
+
+# The above block should make the commented code obsolete...
 ##        if delsrc == True:
 ##            for fObject in self.fileList:
 ##                try:

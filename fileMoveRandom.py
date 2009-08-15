@@ -28,8 +28,6 @@ for x in range(-1, -len(orgOptions), -1):
 
 
 self["album"] = self.get("TALB")
-
 self["title"] = self.get("TIT2")
-
 self["artist"] = self.get("TPE1") or self.get("TPE2")
 self["tracknum"] = self.get("TRCK")
