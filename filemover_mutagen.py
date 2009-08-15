@@ -94,13 +94,17 @@ class AUDIOMover(fileMover):
 #            except WindowsError:
 #                pass
 
+    def buildDirString(self, dir, organization):
+        for str in organization:
+            dir = join(dir, str)
+        return dir
+
     def fileMove(self, dir, delsrc=False, organization=["artist", "album"]):
         "Move files in self.fileList to dir"
         move = delsrc and shutil.move or shutil.copy
 
         for fObject in self.fileList:
-            for str in organization:
-                dir = join(dir, str)
+            dir = buildDirString(dir, organization)
 
             try: move(fObject['name'], dir)
             except IOError:
@@ -147,14 +151,16 @@ class AUDIOMover(fileMover):
     def fileMoveAlbum(self, dir):
         "Move files in self.fileList to dir"
         for fObject in self.albumCrossList:
+            dir = buildDirString(dir, ["album"])
+
             try:
-                shutil.move(fObject['name'],join(dir,str(fObject.get('album'))))
+                shutil.move(fObject['name'], dir)
             except IOError:
                 try:
-                    os.makedirs(join(dir,str(fObject.get('album'))))
+                    os.makedirs(dir)
                 except WindowsError:
                     pass
-                shutil.move(fObject['name'],join(dir,str(fObject.get('album'))))
+                shutil.move(fObject['name'], dir)
 
     def albumCheck(self, dir):
         "Check through dir for albums with only one song"
