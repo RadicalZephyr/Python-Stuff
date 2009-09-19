@@ -133,7 +133,9 @@ class AUDIOMover(fileMover):
         for fObject in fileList:
             for str in organization:    # Build the directory string recursively
                 dir = join(dir, fObject.get(str))
-            fObject['undoInfo'] = (dir, fObject['name']) # Record for easing undo
+                
+            fObject['undoInfo'] = (join(dir, os.path.split(fObject['name'])[1]), \
+                                   fObject['name']) # Record for easing undo
             
             try: move(fObject['name'], dir) # Do the actual moving
             except IOError:     # This probably means the folders don't exist
@@ -231,7 +233,7 @@ class AUDIOMover(fileMover):
         if not self.delsrc: # If the originals weren't deleted, don't try and move
             delSongs(dir)   # just clean up the dest folder.
         else:
-            for fObject in self.fileList:
+            for fObject in self.fileList:   # Otherwise, just reverse the move.
                 shutil.move(fObject["undoInfo"])
         
         
