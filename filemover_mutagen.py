@@ -74,6 +74,7 @@ class fileMover:
         self.extList = getExtList(ftype)
         self.fileList = []
         self.folderList = []
+        self.delsrc = None
 
     def fileFind(self, dir):
         """Find files of self.ftype
@@ -122,6 +123,7 @@ class AUDIOMover(fileMover):
 
     def fileMove(self, dir, fileList=None, delsrc=False, organization=["artist", "album"]):
         """Move files in self.fileList to dir"""
+        self.delsrc = delsrc
         move = delsrc and shutil.move or shutil.copy
         dir = buildDirString(dir, organization)
         if fileList == None:
@@ -213,12 +215,31 @@ class AUDIOMover(fileMover):
                 self.albumCrossList.remove(fObject)
         self.fileMove(dir, organization=["album"], fileList=self.albumCrossList)
 
-##    def deleteDoubles(self, bitrate=128, fileList=None):
+##    def findDoubles(self, bitrate=128, fileList=None):
 ##        if fileList == None:
 ##            fileList = self.fileList
 ##        doubleList = []
 ##        for root, dirs, files in os.walk(dir):
             
+    def undo(self, dir):
+        """Undo the last fileMove operation."""
+        unddoList = self.fileList
+        if not self.delsrc: # If the originals weren't deleted, don't try and move
+            delSongs(dir)   # just clean up the dest folder.
+            break
+        else:
+            self.fileFind(dir)
+        
+        
+    def listify(self, filelist=None):
+        
+        if fileList == None:
+            fileList = self.fileList
+        print "This did nothing." # Remove once finished.
+
+    def delSongs(self, dir):
+        self.fileFind(dir)
+        # shutil delete files
 
     def cleanUp(self, dir):
         for root, dirs, files in os.walk(dir, topdown=False): # Go to the leaf.

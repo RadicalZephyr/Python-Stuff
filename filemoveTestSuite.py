@@ -10,3 +10,7 @@
 
 # Also a possibility that my functions are too complex for unit-testing.  Possibly spec-ing out a new program
 # would help fix this.  Start with the basic ideas and try and forget what i've done with the program so far.
+
+# Undo function idea: the original fileObj list has the full pathname of the original location of all the files.
+# Undo could then basically be, save old fileList, fileFind in dest, and map the new fileList to the old with a reverse
+# shutil.move
