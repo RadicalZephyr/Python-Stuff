@@ -64,13 +64,17 @@ def getExtList(ftype):
         return ['.py','.c','.pl']
     
 class fileMover:
-    """Move all files of ftype from one root directory"""
+    """Provides basic file moving capabilities for files of ftype
+
+    More advanced capabilities and options can be obtained using the
+    child classes, AUDIOMover etc."""
+
     def __init__(self, ftype):
         self.type = ftype                   # Setup the needed variables
         self.extList = getExtList(ftype)
         self.fileList = []
         self.folderList = []
-        
+
     def fileFind(self, dir):
         """Find files of self.ftype
 
