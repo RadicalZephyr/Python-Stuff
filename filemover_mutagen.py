@@ -239,9 +239,17 @@ class AUDIOMover(fileMover):
         
     def listify(self, filelist=None):
         """Print the fileList in a human-readable form"""
+        self.readableList = []
         if fileList == None:
             fileList = self.fileList
-        print "This did nothing." # Remove once finished.
+        for fObject in fileList:
+            self.readableList.append((str(fObject.get('title')), str(fObject.get('artist')), \
+                                      str(fObject.get('album')), str(fObject.get('name'))))
+        tempList = []
+        for item in self.readableList:
+            tempList.append("%s by %s on %s; named %s" % item) 
+            self.prettyString = '\n'.join(tempList)
+            return self.prettyString
 
     def delSongs(self, dir):
         """Delete all the music files in a folder."""
