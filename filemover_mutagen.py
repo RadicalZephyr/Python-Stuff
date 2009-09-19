@@ -1,19 +1,26 @@
+# What's next: implement a file cleanup that finds files with identical tags, and deletes or at least finds one copy.
+# have a folder clean that finds similarly tagged files and deletes one  on
+# the basis of bitrate
+# Also have one that makes a list of filename's/paths of low bitrate songs.
+
+
 import os, sys, shutil, time, id3
 from os.path import join
+from toolbox import *
 
 # This is from Mark Pilgrim's Diveintopython
 class FileInfo(dict):
-    "store file metadata"
+    """store file metadata"""
     def __init__(self, filename=None):
         self["name"] = filename
 
 def listDirectory(directory, fileExtList):
-    "get list of file info objects for files of particular extensions"
+    """get list of file info objects for files of particular extensions"""
     fileList = [os.path.normcase(f) for f in os.listdir(directory)]
     fileList = [os.path.join(directory, f) for f in fileList \
                 if os.path.splitext(f)[1] in fileExtList]
     def getFileInfoClass(filename, module=sys.modules[FileInfo.__module__]):
-        "get file info class from filename extension"
+        """get file info class from filename extension"""
         subclass = "%sFileInfo" % os.path.splitext(filename)[1].upper()[1:]
         return hasattr(module, subclass) and getattr(module, subclass) \
                or FileInfo
@@ -24,18 +31,21 @@ class ID3FileInfo(id3.ID3):
     def __init__(self, *args, **kwargs):
         id3.ID3.__init__(args, kwargs)
         self["name"] = args[0]
-        self["album"] = self.get("TALB")
-        self["title"] = self.get("TIT2")
-        self["artist"] = self.get("TPE1") or self.get("TPE2")
-        self["tracknum"] = self.get("TRCK")
+        self["album"] = sanitizePath(self.get("TALB"))
+        self["title"] = sanitizePath(self.get("TIT2"))
+        self["artist"] = sanitizePath(self.get("TPE1") or self.get("TPE2"))
+        self["tracknum"] = sanitizePath(self.get("TRCK"))
 
 class MP3FileInfo(ID3FileInfo):
+    """Wrapper class for ID3FileInfo to interact with listDirectory"""
     pass
 
 class M4AFileInfo(ID3FileInfo):
+    """Wrapper class for ID3FileInfo to interact with listDirectory"""
     pass
 
 class MP4FileInfo(ID3FileInfo):
+    """Wrapper class for ID3FileInfo to interact with listDirectory"""
     pass
 
 def getExtList(ftype):
@@ -54,14 +64,16 @@ def getExtList(ftype):
         return ['.py','.c','.pl']
     
 class fileMover:
-    "move all files of ftype from one root directory"
+    """Move all files of ftype from one root directory"""
     def __init__(self, ftype):
         self.type = ftype                   # Setup the needed variables
         self.extList = getExtList(ftype)
         self.fileList = []
+        self.folderList = []
         
     def fileFind(self, dir):
-        """
+        """Find files of self.ftype
+
         Search through a directory tree looking for the
         filetype this class was instantiated to look for
         """
@@ -69,7 +81,7 @@ class fileMover:
                 map(self.fileList.append, listDirectory(root, self.extList))
 
     def makeNewDir(self, dir):
-        "Make sure that the paths needed for self.fileMove exist"
+        """Make sure that the paths needed for self.fileMove exist"""
         for fObject in self.fileList:
             try:
                 os.makedirs(join(dir,self.type))
@@ -77,7 +89,7 @@ class fileMover:
                 pass
 
     def fileMove(self, dir):
-        "Move files in self.fileList to dir"
+        """Move files in self.fileList to dir"""
         for fObject in self.fileList:
             shutil.move(fObject['name'], dir)
             
@@ -99,13 +111,13 @@ class AUDIOMover(fileMover):
             dir = join(dir, str)
         return dir
 
-    def fileMove(self, dir, delsrc=False, organization=["artist", "album"]):
-        "Move files in self.fileList to dir"
+    def fileMove(self, dir, delsrc=False, organization=["artist", "album"], fileList=self.fileList):
+        """Move files in self.fileList to dir"""
         move = delsrc and shutil.move or shutil.copy
+        dir = buildDirString(dir, organization)
 
-        for fObject in self.fileList:
-            dir = buildDirString(dir, organization)
-
+        for fObject in fileList:
+            
             try: move(fObject['name'], dir)
             except IOError:
                 try: os.makedirs(dir)
@@ -148,69 +160,60 @@ class AUDIOMover(fileMover):
 ##                    except IOError:
 ##                        print "Failed to copy, no title"
 
-    def fileMoveAlbum(self, dir):
-        "Move files in self.fileList to dir"
-        for fObject in self.albumCrossList:
-            dir = buildDirString(dir, ["album"])
-
-            try:
-                shutil.move(fObject['name'], dir)
-            except IOError:
-                try:
-                    os.makedirs(dir)
-                except WindowsError:
-                    pass
-                shutil.move(fObject['name'], dir)
+# This function may be obsolete because of the added functionality of fileMove and the end of albumCheck.
+##    def fileMoveAlbum(self, dir):
+##        "Move files in self.fileList to dir"
+##        self.albumCheck(dir)
+##        for fObject in self.albumCrossList:
+##            dir = buildDirString(dir, fObject.get("album"))
+##
+##            try:
+##                shutil.move(fObject['name'], dir)
+##            except IOError:
+##                try:
+##                    os.makedirs(dir)
+##                except WindowsError:
+##                    pass
+##                shutil.move(fObject['name'], dir)
 
     def albumCheck(self, dir):
-        "Check through dir for albums with only one song"
+        """Check through dir for albums with only one song
+
+        Only works on directories that have already been organized with
+        fileMove"""
         self.albumCrossList = []
         for root, dirs, files in os.walk(dir):
             fileObs = listDirectory(root, self.extList)
-            if len(fileObs) == 1:
-                self.albumCrossList.append(fileObs[0])
-        def albumCrossCheck():
-            "Check if songs that have their own folder really should"
-            self.albumList = []
-            for fObject in self.albumCrossList:
-                self.albumList.append(fObject.get('album')) 
+            if len(fileObs) == 1: # If there's only one song in a folder
+                self.albumCrossList.append(fileObs[0]) # Add it to the list to check.
+        self.albumList = []
+        for fObject in self.albumCrossList:
+            self.albumList.append(fObject.get('album')) 
 # Create a list of album names to cross check
-            self.albumCrossList.sort()
-            for item in self.albumList:
-                if not self.albumList.count(item) > 1:  
+        self.albumCrossList.sort()
+        for item in self.albumList:
+            if not self.albumList.count(item) > 1:  
 # Unless there's more than one reference to that album
-                    self.albumList.remove(item)         
 # get rid of it.
-            for fObject in self.albumCrossList:
-                if fObject.get('album') not in self.albumList:  
+                self.albumList.remove(item)         
+        for fObject in self.albumCrossList:
+            if fObject.get('album') not in self.albumList:  
 # Update the file object list to reflect album cross referencing
-                    self.albumCrossList.remove(fObject)
-        albumCrossCheck()
+                self.albumCrossList.remove(fObject)
+        self.fileMove(dir, organization=["album"], fileList=self.albumCrossList)
+
+    def deleteDoubles(self, bitrate=128, fileList=self.fileList):
+        doubleList = []
+        for root, dirs, files in os.walk(dir):
+            
 
     def cleanUp(self, dir):
-        for root, dirs, files in os.walk(dir, topdown=False):
-            if not files+dirs:
-                os.removedirs(root)
-
-def yesOrNo(prompt):
-    """Takes a prompt for a y/n answer"""
-    answer = restrictedInput(prompt, 'Y', 'y', 'N', 'n')
-    if answer.Upper() == 'Y':
-        return True
-    elif answer.Upper() == 'N':
-        return False
-
-def restrictedInput(prompt, *outputs):
-    """Take a prompt and list of acceptable inputs, only returns user's 
-       input when they enter something valid"""
-    while True:
-        answer = raw_input(prompt)
-        if answer in outputs:
-            return answer
-        else:
-            print "Invalid input, please try again:"
-        
-                
+        for root, dirs, files in os.walk(dir, topdown=False): # Go to the leaf.
+            if not files+dirs:      # If there's nothing in that folder try to delete it.
+                try:
+                    os.removedirs(root) # This will go upwards deleting empty folders automatically
+                except OSError:         # but it can never delete a non-empty folder.
+                    print "Could not clean up %s directory.  There are no empty directories." % root
 
 if __name__ == "__main__":
     def menu():
@@ -218,13 +221,13 @@ if __name__ == "__main__":
         print "2) Perform Album Check"
         print "3) Cleanup a Directory"
         print "4) Exit"
-        
+        print
+        menuChoice = raw_input("Input Option: ")
     menuChoice = 0
     
     while True:
         amove = AUDIOMover()
         menu()
-        menuChoice = raw_input("Input Option: ")
         if menuChoice == '1':
             source = os.path.normpath(raw_input("Input source folder path: "))
             dest = os.path.normpath(raw_input("Input destination folder path: "))
@@ -232,12 +235,11 @@ if __name__ == "__main__":
             amove.fileFind(source)
 ##            amove.makeNewDir(dest)
             amove.fileMove(dest, delchoice)
-            print "%d files were moved from %s to %s" % 
+            print "%d files were moved from %s to %s" % \
             (len(amove.fileList), source, dest)
             print '\n' * 3
         elif menuChoice == '2':
             root = os.path.normpath(raw_input("Input folder to check albums of: "))
-            amove.albumCheck(root)
             amove.fileMoveAlbum(root)
             print root + "was resorted by album."
             print '\n' * 3
