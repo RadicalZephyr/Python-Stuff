@@ -232,12 +232,13 @@ class AUDIOMover(fileMover):
         
         
     def listify(self, filelist=None):
-        
+        """Print the fileList in a human-readable form"""
         if fileList == None:
             fileList = self.fileList
         print "This did nothing." # Remove once finished.
 
     def delSongs(self, dir):
+        """Delete all the music files in a folder."""
         self.fileFind(dir)
         # shutil delete files
 
