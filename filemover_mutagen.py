@@ -15,12 +15,12 @@ class FileInfo(dict):
         self["name"] = filename
 
 def listDirectory(directory, fileExtList):
-    """get list of file info objects for files of particular extensions"""
+    """Get list of file info objects for files of particular extensions"""
     fileList = [os.path.normcase(f) for f in os.listdir(directory)]
     fileList = [os.path.join(directory, f) for f in fileList \
                 if os.path.splitext(f)[1] in fileExtList]
     def getFileInfoClass(filename, module=sys.modules[FileInfo.__module__]):
-        """get file info class from filename extension"""
+        """Get file info class from filename extension"""
         subclass = "%sFileInfo" % os.path.splitext(filename)[1].upper()[1:]
         return hasattr(module, subclass) and getattr(module, subclass) \
                or FileInfo
@@ -79,10 +79,15 @@ class fileMover:
         """Find files of self.ftype
 
         Search through a directory tree looking for the
-        filetype this class was instantiated to look for
+        filetype this class was instantiated to look for.
         """
         for root, dirs, files in os.walk(dir):
                 map(self.fileList.append, listDirectory(root, self.extList))
+                # This part should check if there are any of ftype in the folder, and if there
+                # are put the folder in self.folderList. This method is klugey and should be
+                # integrated with the above map in some fashion.
+                
+                
 
     def makeNewDir(self, dir):
         """Make sure that the paths needed for self.fileMove exist"""
@@ -115,10 +120,12 @@ class AUDIOMover(fileMover):
             dir = join(dir, str)
         return dir
 
-    def fileMove(self, dir, delsrc=False, organization=["artist", "album"], fileList=self.fileList):
+    def fileMove(self, dir, fileList=None, delsrc=False, organization=["artist", "album"]):
         """Move files in self.fileList to dir"""
         move = delsrc and shutil.move or shutil.copy
         dir = buildDirString(dir, organization)
+        if fileList == None:
+            fileList = self.fileList
 
         for fObject in fileList:
             
@@ -130,7 +137,7 @@ class AUDIOMover(fileMover):
 
 # The above block should make the commented code obsolete...
 ##        if delsrc == True:
-##            for fObject in self.fileList:
+##            for fObject in.fileList:
 ##                try:
 ##                    shutil.move(fObject['name'],
 ##                                join(dir,str(fObject.get('artist')),
@@ -206,9 +213,11 @@ class AUDIOMover(fileMover):
                 self.albumCrossList.remove(fObject)
         self.fileMove(dir, organization=["album"], fileList=self.albumCrossList)
 
-    def deleteDoubles(self, bitrate=128, fileList=self.fileList):
-        doubleList = []
-        for root, dirs, files in os.walk(dir):
+##    def deleteDoubles(self, bitrate=128, fileList=None):
+##        if fileList == None:
+##            fileList = self.fileList
+##        doubleList = []
+##        for root, dirs, files in os.walk(dir):
             
 
     def cleanUp(self, dir):
