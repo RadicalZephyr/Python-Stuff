@@ -115,21 +115,25 @@ class AUDIOMover(fileMover):
 #                os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
 #            except WindowsError:
 #                pass
-
-    def buildDirString(self, dir, organization):
-        for str in organization:
-            dir = join(dir, str)
-        return dir
+# This doesn't work how I intended it to originally.
+# After rewriting, I think this is both obsolete and unworkable...
+##    def buildDirString(self, dir, organization):
+##        for str in organization:
+##            dir = join(dir, str)
+##        return dir
 
     def fileMove(self, dir, fileList=None, delsrc=False, organization=["artist", "album"]):
         """Move files in self.fileList to dir"""
-        self.delsrc = delsrc
+        self.delsrc = delsrc # Record for undo option.
         move = delsrc and shutil.move or shutil.copy
-        dir = buildDirString(dir, organization)
+##        dir = buildDirString(dir, organization)        
         if fileList == None:
             fileList = self.fileList
 
         for fObject in fileList:
+            for str in organization:    # Build the directory string recursively
+                dir = join(dir, fObject.get(str))
+            fObject['undoInfo'] = (dir, fObject['name']) # Record for easing undo
             
             try: move(fObject['name'], dir)
             except IOError:
@@ -228,7 +232,8 @@ class AUDIOMover(fileMover):
             delSongs(dir)   # just clean up the dest folder.
             break
         else:
-            self.fileFind(dir)
+            for fObject in self.fileList:
+                shutil.move(fObject["undoInfo"])
         
         
     def listify(self, filelist=None):
