@@ -127,17 +127,17 @@ class AUDIOMover(fileMover):
         self.delsrc = delsrc # Record for undo option.
         move = delsrc and shutil.move or shutil.copy
 ##        dir = buildDirString(dir, organization)        
-        if fileList == None:
-            fileList = self.fileList
+        if fileList == None:    # See if there was another fileList given
+            fileList = self.fileList    # if not, use the default
 
         for fObject in fileList:
             for str in organization:    # Build the directory string recursively
                 dir = join(dir, fObject.get(str))
             fObject['undoInfo'] = (dir, fObject['name']) # Record for easing undo
             
-            try: move(fObject['name'], dir)
-            except IOError:
-                try: os.makedirs(dir)
+            try: move(fObject['name'], dir) # Do the actual moving
+            except IOError:     # This probably means the folders don't exist
+                try: os.makedirs(dir)   # So make them, and try again.
                 except WindowsError: pass
                 move(fObject['name'], dir)
 
@@ -230,7 +230,6 @@ class AUDIOMover(fileMover):
         unddoList = self.fileList
         if not self.delsrc: # If the originals weren't deleted, don't try and move
             delSongs(dir)   # just clean up the dest folder.
-            break
         else:
             for fObject in self.fileList:
                 shutil.move(fObject["undoInfo"])
