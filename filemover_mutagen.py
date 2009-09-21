@@ -6,7 +6,7 @@
 
 import os, sys, shutil, time, id3
 from os.path import join
-from toolbox import *
+from Gtoolbox import *
 
 # This is from Mark Pilgrim's Diveintopython
 class FileInfo(dict):
@@ -129,7 +129,9 @@ class AUDIOMover(fileMover):
     def fileMove(self, dir, fileList=None, delsrc=False, organization=["artist", "album"]):
         """Move files in self.fileList to dir"""
         self.delsrc = delsrc # Record for undo option.
-        move = delsrc and shutil.move or shutil.copy
+        self.lastDest = dir
+        
+        move = delsrc and shutil.move or shutil.copy # Check delsrc flag
 ##        dir = buildDirString(dir, organization)        
         if fileList == None:    # See if there was another fileList given
             fileList = self.fileList    # if not, use the default
@@ -234,15 +236,27 @@ class AUDIOMover(fileMover):
 ##            fileList = self.fileList
 ##        doubleList = []
 ##        for root, dirs, files in os.walk(dir):
+
+    def doubleCheck(self, dir):
+        """Check a directory for duplicate files
+
+        Optional flags for checking by length, filename, ID3 tags"""
+        fileFind(dir)
+        doubleCheckList = []
+        for fObject in self.fileList:
             
-    def undoMove(self, dir):
+
+    def undoMove(self):
         """Undo the last fileMove operation."""
-        unddoList = self.fileList
+
         if not self.delsrc: # If the originals weren't deleted, don't try and move
-            delSongs(dir)   # just clean up the dest folder.
+            delSongs(self.lastDest)   # just clean up the dest folder.
         else:
             for fObject in self.fileList:   # Otherwise, just reverse the move.
+                try: os.makedirs(dir)
+                except WindowsError: pass
                 shutil.move(fObject["undoInfo"])
+
         
         
     def printList(self, filelist=None):
