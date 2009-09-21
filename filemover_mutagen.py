@@ -49,10 +49,10 @@ class MP4FileInfo(ID3FileInfo):
     pass
 
 def getExtList(ftype):
-    if str(ftype).startswith('.'): 
-# If it's a string of a single filetype return a list
+    ftypeString = str(ftype)
+    if ftypeString.startswith('.'): # If it's a string of a single filetype return a list
         return [ftype]
-    elif str(ftype).startswith('['): # If it's a list, return the list
+    elif ftypeString.startswith('['): # If it's a list, return the list
         return ftype
     elif ftype == 'audio':
         return ['.mp2','.mp3', '.m4a', '.ogg','.flac','.aac','.wma','.wav']
@@ -62,6 +62,8 @@ def getExtList(ftype):
         return ['.txt','.doc','.docx','.odt','.rtf']
     elif ftype == 'prog':
         return ['.py','.c','.pl']
+    else:
+        print >> sys.stderr, "ftype not defined."
     
 class fileMover:
     """Provides basic file moving capabilities for files of ftype
@@ -89,18 +91,20 @@ class fileMover:
                 # integrated with the above map in some fashion.
                 
                 
-
-    def makeNewDir(self, dir):
-        """Make sure that the paths needed for self.fileMove exist"""
-        for fObject in self.fileList:
-            try:
-                os.makedirs(join(dir,self.type))
-            except WindowsError:
-                pass
+# This is obsolete.
+##    def makeNewDir(self, dir):
+##        """Make sure that the paths needed for self.fileMove exist"""
+##        for fObject in self.fileList:
+##            try:
+##                os.makedirs(join(dir,self.type))
+##            except WindowsError:
+##                pass
 
     def fileMove(self, dir):
         """Move files in self.fileList to dir"""
         for fObject in self.fileList:
+            try: os.makedirs(join(dir,self.type))
+            except: pass
             shutil.move(fObject['name'], dir)
             
 class AUDIOMover(fileMover):
@@ -108,13 +112,13 @@ class AUDIOMover(fileMover):
     def __init__(self, ftype='audio'):
         fileMover.__init__(self, ftype)
 
-#    def makeNewDir(self, dir):
-#        "Make sure that the paths needed for self.fileMove exist"
-#        for fObject in self.fileList:
-#            try:
-#                os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
-#            except WindowsError:
-#                pass
+##    def makeNewDir(self, dir):
+##        "Make sure that the paths needed for self.fileMove exist"
+##        for fObject in self.fileList:
+##            try:
+##                os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
+##            except WindowsError:
+##                pass
 # This doesn't work how I intended it to originally.
 # After rewriting, I think this is both obsolete and unworkable...
 ##    def buildDirString(self, dir, organization):
@@ -131,17 +135,21 @@ class AUDIOMover(fileMover):
             fileList = self.fileList    # if not, use the default
 
         for fObject in fileList:
-            for str in organization:    # Build the directory string recursively
-                dir = join(dir, fObject.get(str))
+            for item in organization:    # Build the directory string recursively
+                dir = join(dir, fObject.get(item))
                 
             fObject['undoInfo'] = (join(dir, os.path.split(fObject['name'])[1]), \
-                                   fObject['name']) # Record for easing undo
-            
-            try: move(fObject['name'], dir) # Do the actual moving
-            except IOError:     # This probably means the folders don't exist
-                try: os.makedirs(dir)   # So make them, and try again.
-                except WindowsError: pass
-                move(fObject['name'], dir)
+                                       fObject['name']) # Record for easing undo
+# This seems inefficient.
+##            try: move(fObject['name'], dir) # Do the actual moving
+##            except IOError:     # This probably means the folders don't exist
+##                try: os.makedirs(dir)   # So make them, and try again.
+##                except WindowsError: pass
+##                move(fObject['name'], dir)
+# This should be better than the above commented out code
+            try: os.makedirs(dir)   # Try to make the new directories
+            except WindowsError: pass
+            move(fObject['name'], dir) # Do the actual moving
 
 # The above block should make the commented code obsolete...
 ##        if delsrc == True:
