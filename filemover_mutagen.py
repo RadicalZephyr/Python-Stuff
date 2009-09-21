@@ -240,12 +240,15 @@ class AUDIOMover(fileMover):
     def listify(self, filelist=None):
         """Print the fileList in a human-readable form"""
         self.readableList = []
+        tempList = []
+        
         if fileList == None:
             fileList = self.fileList
+
         for fObject in fileList:
             self.readableList.append((str(fObject.get('title')), str(fObject.get('artist')), \
                                       str(fObject.get('album')), str(fObject.get('name'))))
-        tempList = []
+
         for item in self.readableList:
             tempList.append("%s by %s on %s; named %s" % item) 
             self.prettyString = '\n'.join(tempList)
@@ -254,7 +257,7 @@ class AUDIOMover(fileMover):
     def delSongs(self, dir):
         """Delete all the music files in a folder."""
         self.fileFind(dir)
-        # shutil delete files
+        for fObject in self.fileList: os.remove(fObject["name"])
 
     def cleanUp(self, dir):
         for root, dirs, files in os.walk(dir, topdown=False): # Go to the leaf.
@@ -262,7 +265,7 @@ class AUDIOMover(fileMover):
                 try:
                     os.removedirs(root) # This will go upwards deleting empty folders automatically
                 except OSError:         # but it can never delete a non-empty folder.
-                    print "Could not clean up %s directory.  There are no empty directories." % root
+                    print "Could not clean up %s.  There are no empty directories." % root
 
 if __name__ == "__main__":
     def menu():
