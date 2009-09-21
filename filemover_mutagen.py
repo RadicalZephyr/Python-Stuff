@@ -235,7 +235,7 @@ class AUDIOMover(fileMover):
 ##        doubleList = []
 ##        for root, dirs, files in os.walk(dir):
             
-    def undo(self, dir):
+    def undoMove(self, dir):
         """Undo the last fileMove operation."""
         unddoList = self.fileList
         if not self.delsrc: # If the originals weren't deleted, don't try and move
@@ -245,7 +245,7 @@ class AUDIOMover(fileMover):
                 shutil.move(fObject["undoInfo"])
         
         
-    def listify(self, filelist=None):
+    def printList(self, filelist=None):
         """Print the fileList in a human-readable form"""
         self.readableList = []
         tempList = []
@@ -262,12 +262,12 @@ class AUDIOMover(fileMover):
             self.prettyString = '\n'.join(tempList)
             return self.prettyString
 
-    def delSongs(self, dir):
+    def fileCleanUp(self, dir):
         """Delete all the music files in a folder."""
         self.fileFind(dir)
         for fObject in self.fileList: os.remove(fObject["name"])
 
-    def cleanUp(self, dir):
+    def folderCleanUp(self, dir):
         for root, dirs, files in os.walk(dir, topdown=False): # Go to the leaf.
             if not files+dirs:      # If there's nothing in that folder try to delete it.
                 try:
@@ -305,7 +305,7 @@ if __name__ == "__main__":
             print '\n' * 3
         elif menuChoice == '3':
             clean = os.path.normpath(raw_input("Input folder to clean up: "))
-            amove.cleanUp(clean)
+            amove.folderCleanUp(clean)
             print clean + "was cleaned up."
             print '\n' * 3
         elif menuChoice == '4':
