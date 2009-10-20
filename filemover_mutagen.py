@@ -34,7 +34,7 @@ class ID3FileInfo(id3.ID3):
     through the keys album, title, artist, and tracknum.  Could be extended
     to provide other id3 tag info."""
     def __init__(self, *args, **kwargs):
-        id3.ID3.__init__(args, kwargs)
+        id3.ID3.__init__(self, args, kwargs)
         self["name"] = args[0]
         self["album"] = sanitizePath(str(self.get("TALB")))
         self["title"] = sanitizePath(str(self.get("TIT2")))
