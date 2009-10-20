@@ -34,7 +34,7 @@ class ID3FileInfo(id3.ID3):
     through the keys album, title, artist, and tracknum.  Could be extended
     to provide other id3 tag info."""
     def __init__(self, *args, **kwargs):
-        id3.ID3.__init__(self, args, kwargs)
+        super(ID3FileInfo, self).__init__(*args, **kwargs)
         self["name"] = args[0]
         self["album"] = sanitizePath(str(self.get("TALB")))
         self["title"] = sanitizePath(str(self.get("TIT2")))
@@ -131,8 +131,8 @@ class AUDIOMover(fileMover):
 ##            dir = join(dir, str)
 ##        return dir
 
-    def fileMove(self, dir, fileList=None, delsrc=False, organization=["artist", "album"]):
-        """Move files in self.fileList to dir"""
+    def fileMove(self, dir, delsrc=False, fileList=None, organization=["artist", "album"]):
+        """Move files in fileList to dir"""
         self.delsrc = delsrc # Record for undo option.
         self.lastDest = dir
         
@@ -142,6 +142,7 @@ class AUDIOMover(fileMover):
             fileList = self.fileList    # if not, use the default
 
         for fObject in fileList:
+            dir = self.lastDest
             for item in organization:    # Build the directory string recursively
                 dir = join(dir, fObject.get(item))
                 
@@ -265,7 +266,7 @@ class AUDIOMover(fileMover):
 
         
         
-    def printList(self, filelist=None):
+    def pprint(self, filelist=None):
         """Print the fileList in a human-readable form"""
         self.readableList = []
         tempList = []
@@ -300,10 +301,13 @@ if __name__ == "__main__":
         print "1) Move Files"
         print "2) Perform Album Check/Sort"
         print "3) Cleanup a Directory"
-        print "4) Undo Last Operation"
-        print "5) Exit"
+        print "4) Delete a Directory"
+        print "5) Undo Last Operation"
+        print "6) Exit"
         print
+        global menuChoice
         menuChoice = raw_input("Input Option: ")
+
     menuChoice = 0
     
     while True:
@@ -329,10 +333,18 @@ if __name__ == "__main__":
             print clean + "was cleaned up."
             print '\n' * 3
         elif menuChoice == '4':
+            delete = os.path.normpath(raw_input("Input folder to delete: "))
+            amove.fileCleanUp(delete)
+            amove.folderCleanUp(delete)
+            print delete + "was completely removed.  Hope you didn't need anything in there..."
+            print '\n' * 3
+        elif menuChoice == '5':
             reallyUndo = yesOrNo("Are you sure you want to undo the last file move?")
             if reallyUndo:
                 amove.undoMove()
-        elif menuChoice == '5':
+            print "Last move operation undone.  Don't ask for another though..."
+            print '\n' * 3
+        elif menuChoice == '6':
             print "Thank you."
             time.sleep(2.2)
             break

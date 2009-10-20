@@ -8,8 +8,8 @@ def yesOrNo(prompt="Y/N?"):
     elif answer.upper() == 'N':
         return False
 
-def validateInput(prompt, outputs):
-    """Take a prompt and list of acceptable inputs, only returns user's 
+def validateInput(prompt, *outputs):
+    """Take a prompt and list of acceptable string inputs, only returns user's 
        input when they enter something valid"""
     while True:
         answer = raw_input(prompt)
@@ -20,7 +20,11 @@ def validateInput(prompt, outputs):
 
 def sanitizePath(fileName):
     """Remove \, / and whitespace from filenames"""
-    newpath = path.replace("\\", "")
+    newpath = fileName.replace("\\", "")
     newpath = newpath.replace("/", "")
     return newpath.replace(".", "")
-    
+
+if __name__ == '__main__':
+    print validateInput("Only 5:", '5')
+    print yesOrNo()
+    print sanitizePath('TH\\is sho/uld be pl.ain and unpunctuated.')
