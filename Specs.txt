@@ -1,0 +1,26 @@
+It should never find other types of files then the ones specified.
+
+It should never delete files.
+
+It should delete empty folders.
+
+It should not delete empty folders that were not involved in the file moving.
+
+It should sort music by ID3 tag information.(Add detail) 
+
+It should sort music by bit rate and delete doubles that are the lowest bit rate.
+
+It should be able to handle files with missing or corrupted ID3 information. 
+
+It should not base duplicate file determination on filename, only on ID3 info (track length and name).
+
+It should be able to undo any operation.  Multi-level?
+
+Undo operation should either do a reverse move if delsrc == True or just delete dest if False.
+
+It should be able to make a list of the low-bitrate songs in a folder tree.
+
+It should be able to find all files of the type specified in a folder tree, no matter where they are.
+
+It should be capable of providing lists of the files it's finding.  (For whatever reason.)
+

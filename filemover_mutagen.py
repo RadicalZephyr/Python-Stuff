@@ -28,13 +28,18 @@ def listDirectory(directory, fileExtList):
 
 # From here down is my own work.
 class ID3FileInfo(id3.ID3):
+    """Functional wrapper for id3.ID3
+
+    Provides the information from id3 tags in an easy to access format
+    through the keys album, title, artist, and tracknum.  Could be extended
+    to provide other id3 tag info."""
     def __init__(self, *args, **kwargs):
         id3.ID3.__init__(args, kwargs)
         self["name"] = args[0]
-        self["album"] = sanitizePath(self.get("TALB"))
-        self["title"] = sanitizePath(self.get("TIT2"))
-        self["artist"] = sanitizePath(self.get("TPE1") or self.get("TPE2"))
-        self["tracknum"] = sanitizePath(self.get("TRCK"))
+        self["album"] = sanitizePath(str(self.get("TALB")))
+        self["title"] = sanitizePath(str(self.get("TIT2")))
+        self["artist"] = sanitizePath(str(self.get("TPE1") or self.get("TPE2")))
+        self["tracknum"] = sanitizePath(str(self.get("TRCK")))
 
 class MP3FileInfo(ID3FileInfo):
     """Wrapper class for ID3FileInfo to interact with listDirectory"""
@@ -152,6 +157,7 @@ class AUDIOMover(fileMover):
             try: os.makedirs(dir)   # Try to make the new directories
             except WindowsError: pass
             move(fObject['name'], dir) # Do the actual moving
+            # End fileMove
 
 # The above block should make the commented code obsolete...
 ##        if delsrc == True:
@@ -244,7 +250,7 @@ class AUDIOMover(fileMover):
         fileFind(dir)
         doubleCheckList = []
         for fObject in self.fileList:
-            
+            pass
 
     def undoMove(self):
         """Undo the last fileMove operation."""
@@ -292,9 +298,10 @@ class AUDIOMover(fileMover):
 if __name__ == "__main__":
     def menu():
         print "1) Move Files"
-        print "2) Perform Album Check"
+        print "2) Perform Album Check/Sort"
         print "3) Cleanup a Directory"
-        print "4) Exit"
+        print "4) Undo Last Operation"
+        print "5) Exit"
         print
         menuChoice = raw_input("Input Option: ")
     menuChoice = 0
@@ -307,7 +314,6 @@ if __name__ == "__main__":
             dest = os.path.normpath(raw_input("Input destination folder path: "))
             delchoice = yesOrNo("Delete old files?")
             amove.fileFind(source)
-##            amove.makeNewDir(dest)
             amove.fileMove(dest, delchoice)
             print "%d files were moved from %s to %s" % \
             (len(amove.fileList), source, dest)
@@ -323,6 +329,10 @@ if __name__ == "__main__":
             print clean + "was cleaned up."
             print '\n' * 3
         elif menuChoice == '4':
+            reallyUndo = yesOrNo("Are you sure you want to undo the last file move?")
+            if reallyUndo:
+                amove.undoMove()
+        elif menuChoice == '5':
             print "Thank you."
             time.sleep(2.2)
             break
