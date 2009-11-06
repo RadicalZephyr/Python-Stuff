@@ -7,6 +7,7 @@
 import os, sys, shutil, time, id3
 from os.path import join
 from Gtoolbox import *
+from filemoverhelper import *
 
 # This is from Mark Pilgrim's Diveintopython
 class FileInfo(dict):
@@ -34,7 +35,7 @@ class ID3FileInfo(id3.ID3):
     through the keys album, title, artist, and tracknum.  Could be extended
     to provide other id3 tag info."""
     def __init__(self, *args, **kwargs):
-        super(ID3FileInfo, self).__init__(*args, **kwargs)
+        super(ID3FileInfo, self).__init__(self, *args, **kwargs)
         self["name"] = args[0]
         self["album"] = sanitizePath(str(self.get("TALB")))
         self["title"] = sanitizePath(str(self.get("TIT2")))
@@ -53,23 +54,9 @@ class MP4FileInfo(ID3FileInfo):
     """Wrapper class for ID3FileInfo to interact with listDirectory"""
     pass
 
-def getExtList(ftype):
-    ftypeString = str(ftype)
-    if ftypeString.startswith('.'): # If it's a string of a single filetype return a list
-        return [ftype]
-    elif ftypeString.startswith('['): # If it's a list, return the list
-        return ftype
-    elif ftype == 'audio':
-        return ['.mp2','.mp3', '.m4a', '.ogg','.flac','.aac','.wma','.wav']
-    elif ftype == 'video':
-        return ['.avi','.divx','.mp4','.ogm','.qt','.wmv','.mov']
-    elif ftype == 'text':
-        return ['.txt','.doc','.docx','.odt','.rtf']
-    elif ftype == 'prog':
-        return ['.py','.c','.pl']
-    else:
-        print >> sys.stderr, "ftype not defined."
-    
+
+
+
 class fileMover:
     """Provides basic file moving capabilities for files of ftype
 
