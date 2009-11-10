@@ -1,2 +1,0 @@
-python filemoverGUI.py
-pause
