@@ -24,7 +24,9 @@ def makeOrgList(inputString):
 
 def getExtList(ftype):
     ftypeString = str(ftype)
-    if ftypeString.startswith('.'): # If it's a string of a single filetype return a list
+    if ftypeString == 'all':
+        return ['.*']
+    elif ftypeString.startswith('.'): # If it's a string of a single filetype return a list
         return [ftype]
     elif ftypeString.startswith('['): # If it's a list, return the list
         return ftype

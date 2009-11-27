@@ -27,7 +27,6 @@ import filemover_mutagen as fmove
 class ClassChecker(unittest.TestCase):
     testFiles = [r"D:\test\a.mp3", r"D:\test\b.mp3", r"D:\test\pdf.pdf",
                  r"D:\test\text.txt"]
-    
 
     def testFileInfo(self):
         """FileInfo should work with any filetype"""
@@ -56,8 +55,16 @@ class ClassChecker(unittest.TestCase):
             fileObj['name']
 
 class fileMoveChecks(unittest.TestCase):
+    testFiles = [r"D:\test\a.mp3", r"D:\test\b.mp3", r"D:\test\pdf.pdf",
+                 r"D:\test\text.txt"]
 
-    def 
+    def testCanFindAnyFile(self):
+        fileFinder = fmove.fileMover()
+        fileNames = []
+        for fDict in fileFinder.fileList:
+            fileNames.append(fDict['name'])
+        for file in self.testFiles:
+            self.assert_(file in fileNames)
 
 if __name__ == "__main__":
     unittest.main()

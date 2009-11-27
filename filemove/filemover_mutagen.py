@@ -63,7 +63,7 @@ class fileMover:
     More advanced capabilities and options can be obtained using the
     child classes, AUDIOMover etc."""
 
-    def __init__(self, ftype):
+    def __init__(self, ftype='all'):
         self.type = ftype                   # Setup the needed variables
         self.extList = getExtList(ftype)
         self.fileList = []
@@ -78,16 +78,11 @@ class fileMover:
         """
         for root, dirs, files in os.walk(dir):
                 map(self.fileList.append, listDirectory(root, self.extList))
-                # This part should check if there are any of ftype in
-                # the folder, and if there are put the folder in
-                # self.folderList. This method is klugey and should be
-                # integrated with the above map in some fashion.
-                # ---- The above comment appears to be outdated.
 
     def fileMove(self, dir):
         """Move files in self.fileList to dir"""
         for fObject in self.fileList:
-            try: os.makedirs(join(dir,self.type))
+            try: os.makedirs(join(dir, self.type))
             except: pass
             shutil.move(fObject['name'], dir)
             
@@ -103,6 +98,7 @@ class AUDIOMover(fileMover):
 ##                os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
 ##            except WindowsError:
 ##                pass
+
 # This doesn't work how I intended it to originally.
 # After rewriting, I think this is both obsolete and unworkable...
 ##    def buildDirString(self, dir, organization):
