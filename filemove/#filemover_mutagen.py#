@@ -103,6 +103,7 @@ class AUDIOMover(fileMover):
 ##                os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
 ##            except WindowsError:
 ##                pass
+
 # This doesn't work how I intended it to originally.
 # After rewriting, I think this is both obsolete and unworkable...
 ##    def buildDirString(self, dir, organization):
