@@ -119,7 +119,7 @@ class AUDIOMover(fileMover):
         for fObject in fileList:
             dir = self.lastDest
             for item in organization:    # Build the directory string recursively
-                dir = join(dir, fObject.get(item))
+                dir = join(dir, fObject.get(item, item))
                 
             fObject['undoInfo'] = (join(dir, os.path.split(fObject['name'])[1]), \
                                        fObject['name']) # Record for easing undo
@@ -219,14 +219,39 @@ class AUDIOMover(fileMover):
 ##        doubleList = []
 ##        for root, dirs, files in os.walk(dir):
 
-    def doubleCheck(self, dir):
-        """Check a directory for duplicate files
+    def audioEquality(self, fOne, fTwo, flagNum=3):
+        """Compare two audio files
 
-        Optional flags for checking by length, filename, ID3 tags"""
-        fileFind(dir)
-        doubleCheckList = []
-        for fObject in self.fileList:
-            pass
+        True if they're within a given margin of similarity"""        
+        flags = 0
+        for val in fOne.keys():
+            if fOne[val] == fTwo.get(val):
+                flags = flags + 1
+
+        sizeOne = os.path.getsize(fOne['name'])
+        sizeTwo = os.path.getsize(fTwo['name'])
+        if sizeOne-10 < sizeTwo < sizeOne+10:
+            # This should mean if sizeone is within twenty of sizetwo
+            # no promises though...
+            flags = flags + 1
+            
+        if flags > flagNum:
+            # Arbitrary number of matching file attributes
+            return True
+        else: return False
+
+    def doubleCheck(self, dir):
+        """Check a directory for duplicate files"""
+
+        self.fileFind(dir)
+        doubleDict = {}
+        for main in self.fileList:
+            doubleDict[main] = []
+            for iter in self.fileList:
+                if self.audioEquality(main, iter):
+                    doubleDict[main].append(iter)
+                    
+        # I'm not sure how this should function upon
 
     def undoMove(self):
         """Undo the last fileMove operation."""
@@ -234,7 +259,7 @@ class AUDIOMover(fileMover):
         if not self.delsrc: # If the originals weren't deleted, don't try and move
             delSongs(self.lastDest)   # just clean up the dest folder.
         else:
-            for fObject in self.fileList:   # Otherwise, just reverse the move.
+            for fObject in self.fileList:   # Otherwise, reverse the move.
                 try: os.makedirs(dir)
                 except WindowsError: pass
                 shutil.move(fObject["undoInfo"])

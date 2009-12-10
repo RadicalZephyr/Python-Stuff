@@ -11,9 +11,15 @@ def yesOrNo(prompt="Y/N?"):
 def validateInput(prompt, *outputs):
     """Take a prompt and list of acceptable string inputs, only returns user's 
        input when they enter something valid"""
+    outputsList = list(outputs)
+    for i in outputs:
+        if type(i) == list:
+            outputsList.extend(i)
+            outputsList.remove(i)
+
     while True:
         answer = raw_input(prompt)
-        if answer in outputs:
+        if answer in outputsList:
             return answer
         else:
             print "Invalid input, please try again:"

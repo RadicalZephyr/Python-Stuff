@@ -1,0 +1,65 @@
+1) 
+PREconditions: a and b are both positive integers
+	       b can be a zero, but a cannot
+	       neiher a nor b can be negative
+POSTconditions: returns a positive integer less than a or b
+		
+2)
+"amount is equal to 1000
+def addInterest(balance, rate): 
+    newBalance = balance * (1 + rate) 
+    return newBalance 
+
+def test() 
+    amount = 1000 
+    rate = 0.05 
+    amount = addInterest(amount, rate) 
+    print "amount is equal to ", amount 
+
+#MAIN PROGRAM 
+test() 
+
+3)
+def addInterest(balanceList, rate): 
+    # PRE: balanceList is a list initialized with non-negative values and rate 
+    # is a non-negative value reflecting the real value of the percentage rate 
+    # (e.g. if the interest rate is 8% then rate should equal 0.08) 
+    #POST: balanceList is updated so each value in the list has been 
+    # increased by 100*rate percent. 
+    for i in range(balanceList.length):
+        balanceList[i] = balanceList[i]*(1+rate)
+    
+	
+def test(): 
+    amountList = [1000, 2000, 50, 234] 
+    rate = 0.05 
+    addInterest(amountList, rate) 
+    print amountList 
+#MAIN PROGRAM 
+test() 
+
+4)
+
+def appendNextFib(fibList):
+  # PRE: fibList is a list of ordered fibonacci series numbers if the list
+  # is empty, it starts the series with 1
+  # POST: this returns the next number in the series as well as appending
+  # it to the given list
+  if fibList:
+	if fibList.length > 1:
+	   temp = fibList[-1] + fibList[-2]
+	   fibList.append(temp)
+	   return temp
+	else:
+	   fibList.append(1)
+	   return 1
+  else:
+	fibList[0] = 0
+	return 0
+
+def main():
+    fibSeq = []
+    for i in range(20):
+    	print appendNextFib(fibSeq)
+
+

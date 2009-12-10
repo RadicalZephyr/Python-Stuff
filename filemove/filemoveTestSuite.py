@@ -19,6 +19,11 @@
 # of the original location of all the files.  Undo could then
 # basically be, save old fileList, fileFind in dest, and map the new
 # fileList to the old with a reverse shutil.move
+
+
+# audiocompare and doubleCheck need more work. Right now double doesn't
+# return anything, and the test doesn't check that it does anything except
+# not fail.
 """Unit test for filemover_mutagen.py"""
 
 import unittest
@@ -45,8 +50,7 @@ class ClassChecker(unittest.TestCase):
             self.assertRaises(id3.ID3NoHeaderError, fmove.ID3FileInfo, file)
 
     def testID3Keys(self):
-        """ID3FileInfo should contain certain keys post-initialization
-           These values should contain the same information as id3.ID3 keys"""
+        """ID3FileInfo should contain certain keys post-initialization"""
         for file in self.testFiles[0:2]:
             fileObj = fmove.ID3FileInfo(file)
             fileObj['album']
@@ -58,13 +62,42 @@ class fileMoveChecks(unittest.TestCase):
     testFiles = [r"D:\test\a.mp3", r"D:\test\b.mp3", r"D:\test\pdf.pdf",
                  r"D:\test\text.txt"]
 
+    def setUp(self):
+        self.fileFinder = fmove.fileMover()
+
+    def tearDown(self):
+        del self.fileFinder
+
     def testCanFindAnyFile(self):
-        fileFinder = fmove.fileMover()
+        """fileMover should be able to see all the files in the test folder"""
         fileNames = []
-        for fDict in fileFinder.fileList:
+        for fDict in self.fileFinder.fileList:
             fileNames.append(fDict['name'])
-        for file in self.testFiles:
-            self.assert_(file in fileNames)
+        for file in fileNames:
+            self.assert_(file in self.testFiles)
+
+    def testFileMove(self):
+        """fileMover should move all the files"""
+        pass
+
+class audioMoveChecks(unittest.TestCase):
+
+    def setUp(self):
+        self.amove = fmove.AUDIOMover()
+
+    def tearDown(self):
+        del self.amove
+
+    def testDoubleCheck(self):
+        """DoubleCheck should run without errors"""
+        self.amove.doubleCheck(r'D:\test')
+
+    def testAudioCompare(self):
+        """AudioCompare should find the two test files to be the same"""
+        dupes = (r'D:\test\c.mp3', r'D:\test\d.mp3')
+        files = (fmove.MP3FileInfo(dupes[0]), fmove.MP3FileInfo(dupes[1]))
+        self.assert_(self.amove.audioCompare(files[0], files[1]))
+        
 
 if __name__ == "__main__":
     unittest.main()
