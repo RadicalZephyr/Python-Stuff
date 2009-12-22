@@ -28,6 +28,6 @@ _dirList = None
 _fileList = None
 _gotoEntry = None
 
-tk = Tkinter.Tk()
+tk = Tk()
 
 Window = Application(tk)

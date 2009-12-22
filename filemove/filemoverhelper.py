@@ -26,17 +26,30 @@ def getExtList(ftype):
     ftypeString = str(ftype)
     if ftypeString == 'all':
         return ['.*']
+    
     elif ftypeString.startswith('.'): # If it's a string of a single filetype return a list
         return [ftype]
+    
     elif ftypeString.startswith('['): # If it's a list, return the list
-        return ftype
+        templist = []
+        for i in ftype:
+            if not i[0] == '.':
+                templist.extend(getExtList(i))
+            else:
+                templist.append(i)
+        return templist
+
     elif ftype == 'audio':
         return ['.mp2','.mp3', '.m4a', '.ogg','.flac','.aac','.wma','.wav']
+    
     elif ftype == 'video':
         return ['.avi','.divx','.mp4','.ogm','.qt','.wmv','.mov']
+    
     elif ftype == 'text':
         return ['.txt','.doc','.docx','.odt','.rtf']
+    
     elif ftype == 'prog':
         return ['.py','.c','.pl']
+    
     else:
         print >> sys.stderr, "ftype not defined."

@@ -85,26 +85,33 @@ class fileMover:
             try: os.makedirs(join(dir, self.type))
             except: pass
             shutil.move(fObject['name'], dir)
+
+    def fileCleanUp(self, dir):
+        """Delete all the music files in a folder."""
+        self.fileFind(dir)
+        for fObject in self.fileList: os.remove(fObject["name"])
+
+    def folderCleanUp(self, dir):
+        for root, dirs, files in os.walk(dir, topdown=False): # Go to the leaf.
+            if not files+dirs:      # If there's nothing in that folder try to delete it.
+                try:
+                    os.removedirs(root) # This will go upwards deleting empty folders automatically
+                except OSError:         # but it can never delete a non-empty folder.
+                    print "Could not clean up %s.  There are no empty directories." % root
+
+    def delFiles(self, fileList=None):
+        """Delete all the files in fileList"""
+
+        if not fileList:
+            fileList = self.fileList
+
+        for item in fileList:
+            os.remove(item["name"])
             
 class AUDIOMover(fileMover):
     "move and organize audio files" 
     def __init__(self, ftype='audio'):
         fileMover.__init__(self, ftype)
-
-##    def makeNewDir(self, dir):
-##        "Make sure that the paths needed for self.fileMove exist"
-##        for fObject in self.fileList:
-##            try:
-##                os.makedirs(join(dir,str(fObject.get('artist')),str(fObject.get('album'))))
-##            except WindowsError:
-##                pass
-
-# This doesn't work how I intended it to originally.
-# After rewriting, I think this is both obsolete and unworkable...
-##    def buildDirString(self, dir, organization):
-##        for str in organization:
-##            dir = join(dir, str)
-##        return dir
 
     def fileMove(self, dir, delsrc=False, fileList=None, organization=["artist", "album"]):
         """Move files in fileList to dir"""
@@ -112,13 +119,13 @@ class AUDIOMover(fileMover):
         self.lastDest = dir
         
         move = delsrc and shutil.move or shutil.copy # Check delsrc flag
-##        dir = buildDirString(dir, organization)        
-        if fileList == None:    # See if there was another fileList given
+        if not fileList:    # See if there was another fileList given
             fileList = self.fileList    # if not, use the default
 
         for fObject in fileList:
             dir = self.lastDest
-            for item in organization:    # Build the directory string recursively
+            for item in organization:    # Build the directory string
+                                         # recursively
                 dir = join(dir, fObject.get(item, item))
                 
             fObject['undoInfo'] = (join(dir, os.path.split(fObject['name'])[1]), \
@@ -171,22 +178,6 @@ class AUDIOMover(fileMover):
 ##                    except IOError:
 ##                        print "Failed to copy, no title"
 
-# This function may be obsolete because of the added functionality of fileMove and the end of albumCheck.
-##    def fileMoveAlbum(self, dir):
-##        "Move files in self.fileList to dir"
-##        self.albumCheck(dir)
-##        for fObject in self.albumCrossList:
-##            dir = buildDirString(dir, fObject.get("album"))
-##
-##            try:
-##                shutil.move(fObject['name'], dir)
-##            except IOError:
-##                try:
-##                    os.makedirs(dir)
-##                except WindowsError:
-##                    pass
-##                shutil.move(fObject['name'], dir)
-
     def albumCheck(self, dir):
         """Check through dir for albums with only one song
 
@@ -212,12 +203,6 @@ class AUDIOMover(fileMover):
 # Update the file object list to reflect album cross referencing
                 self.albumCrossList.remove(fObject)
         self.fileMove(dir, organization=["album"], fileList=self.albumCrossList)
-
-##    def findDoubles(self, bitrate=128, fileList=None):
-##        if fileList == None:
-##            fileList = self.fileList
-##        doubleList = []
-##        for root, dirs, files in os.walk(dir):
 
     def audioEquality(self, fOne, fTwo, flagNum=3):
         """Compare two audio files
@@ -245,13 +230,25 @@ class AUDIOMover(fileMover):
 
         self.fileFind(dir)
         doubleDict = {}
-        for main in self.fileList:
-            doubleDict[main] = []
-            for iter in self.fileList:
-                if self.audioEquality(main, iter):
-                    doubleDict[main].append(iter)
-                    
-        # I'm not sure how this should function upon
+        for first in self.fileList: # First, get a file from the list
+            doubleDict[first] = []  # Make a list to hold all the possibly
+                                    # doubles
+            for iter in self.fileList:  # Then check all the other files
+                if self.audioEquality(main, iter):  # for doubleness
+                    doubleDict[main].append(iter)   # add to list if doubled.
+        doubleList = []
+        for key, value in doubleDict.items():
+            if value:
+                doubleList.append(key)
+                doubleList.extend(value)
+
+        return doubleList
+    
+        # At this point we have a dictionary of lists, some of which are empty
+        # the next step is to throw out the empty lists, and then put the
+        # items in the full lists into self.fileList form so it can be passed to
+        # fileMove.  Then, filemove should get called so as to put all the
+        # duplicates in their own heading under Duplicates
 
     def undoMove(self):
         """Undo the last fileMove operation."""
@@ -260,12 +257,8 @@ class AUDIOMover(fileMover):
             delSongs(self.lastDest)   # just clean up the dest folder.
         else:
             for fObject in self.fileList:   # Otherwise, reverse the move.
-                try: os.makedirs(dir)
-                except WindowsError: pass
-                shutil.move(fObject["undoInfo"])
+                    shutil.move(fObject["undoInfo"])
 
-        
-        
     def pprint(self, filelist=None):
         """Print the fileList in a human-readable form"""
         self.readableList = []
@@ -282,19 +275,6 @@ class AUDIOMover(fileMover):
             tempList.append("%s by %s on %s; named %s" % item) 
             self.prettyString = '\n'.join(tempList)
             return self.prettyString
-
-    def fileCleanUp(self, dir):
-        """Delete all the music files in a folder."""
-        self.fileFind(dir)
-        for fObject in self.fileList: os.remove(fObject["name"])
-
-    def folderCleanUp(self, dir):
-        for root, dirs, files in os.walk(dir, topdown=False): # Go to the leaf.
-            if not files+dirs:      # If there's nothing in that folder try to delete it.
-                try:
-                    os.removedirs(root) # This will go upwards deleting empty folders automatically
-                except OSError:         # but it can never delete a non-empty folder.
-                    print "Could not clean up %s.  There are no empty directories." % root
 
 if __name__ == "__main__":
     def menu():

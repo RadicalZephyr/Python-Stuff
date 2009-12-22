@@ -4,3 +4,5 @@
 # has input, output and modification methods.  Then, the filemoving
 # class can just instantiate the data class, and have it handle how
 # things get stored.
+
+class 

@@ -90,7 +90,8 @@ class audioMoveChecks(unittest.TestCase):
 
     def testDoubleCheck(self):
         """DoubleCheck should run without errors"""
-        self.amove.doubleCheck(r'D:\test')
+        double = self.amove.doubleCheck(r'D:\test')
+        
 
     def testAudioCompare(self):
         """AudioCompare should find the two test files to be the same"""
