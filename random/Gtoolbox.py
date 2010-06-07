@@ -30,7 +30,22 @@ def sanitizePath(fileName):
     newpath = newpath.replace("/", "")
     return newpath.replace(".", "")
 
+def typesInList(iterable):
+    """Return a list of all the types in a list."""
+    typelist = []
+    for i in iterable:
+        if not type(i) in typelist:
+            typelist.append(type(i))
+
+    return typelist
+
+def listIsType(iterable, listtype):
+    """Verifies that a list is of type listtype"""
+    return listtype in typesInList(iterable)
+
 if __name__ == '__main__':
     print validateInput("Only 5:", '5')
     print yesOrNo()
     print sanitizePath('TH\\is sho/uld be pl.ain and unpunctuated.')
+    print typesInList(['a', 1, True, 1, 2.3])
+    print listIsType([1,2,4,5], int)
