@@ -1,0 +1,15 @@
+<BODY LANG="en-US" DIR="LTR">
+<P >The quick brown fox <I>italicized </I>over
+the <B>bold</B>
+brown dog.</P>
+<P >It
+died slowly.</P>
+<UL>
+	<LI><P >Ferret
+	= Carpet shark</P>
+	<LI><P >It
+	is known</P>
+	<LI><P >So
+	is your mom</P>
+</UL>
+</BODY>

@@ -4,7 +4,7 @@
 # Also have one that makes a list of filename's/paths of low bitrate songs.
 
 
-import os, sys, shutil, time, id3
+import os, sys, shutil, time, id3, mutagen, mp4, flac
 from os.path import join
 from Gtoolbox import *
 from filemoverhelper import *
@@ -13,6 +13,9 @@ from filemoverhelper import *
 class FileInfo(dict):
     """store file metadata"""
     def __init__(self, filename=None):
+        fileinfo = mutagen.File(filename)
+        if fileinfo:
+            self = fileinfo
         self["name"] = filename
 
 def listDirectory(directory, fileExtList):
@@ -22,7 +25,7 @@ def listDirectory(directory, fileExtList):
                 if os.path.splitext(f)[1] in fileExtList]
     def getFileInfoClass(filename, module=sys.modules[FileInfo.__module__]):
         """Get file info class from filename extension"""
-        subclass = "%sFileInfo" % os.path.splitext(filename)[1].upper()[1:]
+        subclass = "{0}FileInfo".format(os.path.splitext(filename)[1].upper()[1:])
         return hasattr(module, subclass) and getattr(module, subclass) \
                or FileInfo
     return [getFileInfoClass(f)(f) for f in fileList]
@@ -32,30 +35,80 @@ class ID3FileInfo(id3.ID3):
     """Functional wrapper for id3.ID3
 
     Provides the information from id3 tags in an easy to access format
-    through the keys album, title, artist, and tracknum.  Could be extended
+    through the keys album, title, artist, and tracknumber.  Could be extended
     to provide other id3 tag info."""
     def __init__(self, *args, **kwargs):
-        super(ID3FileInfo, self).__init__(*args, **kwargs)
-        self["name"] = args[0]
-        self["album"] = sanitizePath(str(self.get("TALB")))
-        self["title"] = sanitizePath(str(self.get("TIT2")))
-        self["artist"] = sanitizePath(str(self.get("TPE1") or self.get("TPE2")))
-        self["tracknum"] = sanitizePath(str(self.get("TRCK")))
+        try:
+            super(ID3FileInfo, self).__init__(*args, **kwargs)
+            self["name"] = args[0]
+            self["album"] = sanitizePath(str(self.get("TALB")))
+            self["title"] = sanitizePath(str(self.get("TIT2")))
+            self["artist"] = sanitizePath(str(self.get("TPE1") or self.get("TPE2")))
+            self["tracknumber"] = sanitizePath(str(self.get("TRCK")))
+        except:
+            pass
 
 class MP3FileInfo(ID3FileInfo):
     """Wrapper class for ID3FileInfo to interact with listDirectory"""
     pass
 
-class M4AFileInfo(ID3FileInfo):
-    """Wrapper class for ID3FileInfo to interact with listDirectory"""
+class M4AFileInfo(mp4.MP4):
+    """Wrapper class for mutagen.mp4.MP4 to interact with listDirectory"""
+    def __init__(self, *args, **kwargs):
+        try:
+            super(mp4.MP4, self).__init__(*args, **kwargs)
+            self["name"] = args[0]
+            self["album"] = self['\xa9alb']
+            self["title"] = self['\xa9nam']
+            self["artist"] = self['\xa9ART'] or self['aART']
+            self["tracknumber"] = self['trkn'][0]
+        except:
+            pass
+
+class MP4FileInfo(M4AFileInfo):
+    """Wrapper class for mutagen.mp4.MP4 to interact with listDirectory"""
     pass
 
-class MP4FileInfo(ID3FileInfo):
-    """Wrapper class for ID3FileInfo to interact with listDirectory"""
-    pass
+class OGGFileInfo():
+    """Dispatcher class for figuring out what type of ogg the file is"""
+    def __init__(self, file):
+        try:
+            from oggvorbis import OggVorbis
+            self = OggVorbis(file)
+            return
+        except OggVorbisHeaderError:
+            pass
+        try:
+            from oggspeex import OggSpeex
+            self = OggSpeex(file)
+            return
+        except OggSpeexHeaderError:
+            pass
+        try:
+            from oggflac import OggFLAC
+            self = OggFLAC(file)
+            return
+        except OggFLACHeaderError:
+            pass
+        try:
+            from oggtheora import OggTheora
+            self = OggTheora(file)
+            return
+        except OggTheoraHeaderError:
+            pass
+        from ogg import OggFileInfo
+        self = OggFileInfo(file)
+        self["name"] = file
+        
 
-
-
+class FLACFileInfo(flac.FLAC):
+    """Wrapper class for mutagen.flac.FLAC to interact with listDirectory"""
+    def __init(self, *args, **kwargs):
+        try:
+            super(flac.FLAC, self).__init__(*args, **kwargs)
+            self["name"] = args[0]
+        except:
+            pass
 
 class fileMover:
     """Provides basic file moving capabilities for files of ftype
@@ -130,53 +183,12 @@ class AUDIOMover(fileMover):
                 
             fObject['undoInfo'] = (join(dir, os.path.split(fObject['name'])[1]), \
                                        fObject['name']) # Record for easing undo
-# This seems inefficient.
-##            try: move(fObject['name'], dir) # Do the actual moving
-##            except IOError:     # This probably means the folders don't exist
-##                try: os.makedirs(dir)   # So make them, and try again.
-##                except WindowsError: pass
-##                move(fObject['name'], dir)
+
 # This should be better than the above commented out code
             try: os.makedirs(dir)   # Try to make the new directories
             except WindowsError: pass
             move(fObject['name'], dir) # Do the actual moving
             # End fileMove
-
-# The above block should make the commented code obsolete...
-##        if delsrc == True:
-##            for fObject in.fileList:
-##                try:
-##                    shutil.move(fObject['name'],
-##                                join(dir,str(fObject.get('artist')),
-##                                     str(fObject.get('album'))))
-##                except IOError:
-##                    try:
-##                        os.makedirs(join(dir,str(fObject.get('artist')),
-##                                         str(fObject.get('album'))))
-##                    except WindowsError:
-##                        pass
-##                    shutil.move(fObject['name'],
-##                                join(dir,str(fObject.get('artist')),
-##                                     str(fObject.get('album'))))
-##        else:
-##            for fObject in self.fileList:
-##                if 'title' in fObject.keys():
-##                    try:
-##                        shutil.copy2(fObject['name'], 
-##                                     join(dir,str(fObject.get('artist')),
-##                                                   str(fObject.get('album')),
-##                                                   "".join((str(fObject.get('title')),
-##                                                   str(os.path.splitext(fObject['name'])[1])))))
-##                    except IOError:
-##                        print "Failed to copy, title"
-##                else:
-##                    try:
-##                        shutil.copy2(fObject['name'], 
-##                                     join(dir,str(fObject.get('artist')),
-##                                                  str(fObject.get('album')),
-##                                                  str(fObject.get('artist'))))
-##                    except IOError:
-##                        print "Failed to copy, no title"
 
     def albumCheck(self, dir):
         """Check through dir for albums with only one song

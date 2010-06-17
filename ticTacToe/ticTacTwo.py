@@ -27,7 +27,38 @@ class ticBoard():
         for x in xrange(9):
             if self.rectList[x].collidepoint(point):
                 return x    # Test all rect's for having been clicked
-            
+
+    def chooseBox(self):
+        box = self.oneTurnWin()
+        if not box:
+            box = self.testBoxes()
+        return box
+
+    def testBoxes(self):
+        for box in [4, 0, 2, 6, 8, 1, 3, 5, 7]:
+            if not self.boxes[box]:
+                return box
+
+    def oneTurnWin(self):
+        x = self.boxes
+        for a,b,c in self.winList:
+            if ((x[a] and x[b]) or (x[b] and x[c]) or (x[a] and x[c])) and \
+            (x[a] == x[b] or x[b] == x[c] or x[a] == x[c]):
+                for i in [a, b, c]:
+                    if not self.boxes[i]:
+                        return i
+
+        return False
+    
+    def computerMove(self):
+        box = self.chooseBox()
+        if not self.boxes[box]:
+            if self.turn % 2:
+                self.boxes[box] = 1
+                self.turn += 1
+            else:
+                self.boxes[box] = 2
+                self.turn += 1
 
     def drawBoard(self, size):
         # Should I make internal variables for each box that are rect objects everytime
@@ -47,6 +78,7 @@ class ticBoard():
             elif self.boxes[box] == 1:  # Check if it should be an X
                 pygame.draw.aaline(self.parent, (0,0,0), (tl), (br), 2)
                 pygame.draw.aaline(self.parent, (0,0,0), (tr), (bl), 5)
+                
         def boxCoords(box): #Retrieves the stored variables in a coherent form for each box
             if box == 0: 
                 return [(0,0),(self.wa,0),(0,self.ha),(self.wa,self.ha)]
@@ -110,6 +142,7 @@ class ticBoard():
             if self.boxes[a] == self.boxes[b] == self.boxes[c] and self.boxes[a] != 0:
                 print "Player" + str(self.boxes[a]) + "wins!"
                 exit()
+
 if __name__ == "__main__":
     # ACTUAL GAME CODE STARTS HERE
     SCREEN_SIZE = (150,150)
@@ -133,6 +166,10 @@ if __name__ == "__main__":
 
         if event.type == MOUSEBUTTONDOWN:
             board.click(event)
+
+        if event.type == KEYDOWN:
+            if event.key == K_c:
+                board.computerMove()
             
         board.drawBoard(SCREEN_SIZE)
         pygame.display.update()

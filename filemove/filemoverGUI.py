@@ -84,14 +84,14 @@ class Application(Frame):
     def findFiles(self):
         if self.AudioCheck.get():
             self.audiomove = fmove.AUDIOMover()
-            self.audiomove.fileFind(self.sourceVar)
-            self.foundFiles.insert(END, '/n'.join(self.audiomove.fileList))
+            self.audiomove.fileFind(self.sourceVar.get())
+            self.foundFiles.insert(END, '/n'.join([file["name"] for file in self.audiomove.fileList]))
             
         typelist = self.checkCheckBoxes()
         if typelist:
             self.filemove = fmove.fileMover(typelist)
-            self.filemove.fileFind(self.sourceVar)
-            self.foundFiles.insert(END, '/n'.join(self.filemove.fileList))
+            self.filemove.fileFind(self.sourceVar.get())
+            self.foundFiles.insert(END, '/n'.join([file["name"] for file in self.filemove.fileList]))
         
         
 

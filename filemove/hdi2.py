@@ -1,17 +1,10 @@
-# Script for inserting the auto-generated html from open-office into a webpage
-# PREconditions: that the webpage have only one div with an id="contentbody"
-# and that this is where the modified content needs to go.
-# the main function also only takes two arguments, the name of the new content
-# file and the name of the real html document in that order. (Local, not full paths)
+# hdi rewrite with better script option support and less kludge (hopefully)
 
-# Extension notes -- need to be able to close <LI> tags intelligently
-# also need to remove <P> tags from the <LI> elements
+import re, os, tidy
+from optparse import OptionParser
 
-import re, os, sys, tidy
-
-
-        
-
+usage = "usage: %prog [options] source dest insert the body of source html into dest"
+    
 def stripFluff(html):
     """Return a string of html content.
     
@@ -74,12 +67,12 @@ def addContent(content, html, id="contentbody", append=False):
     if id[0] == '<' and id[-1] == '>':
         strToFind = id
     else:
-        strToFind = 'id="%s">' % id
+        strToFind = 'id="%s".*?>' % id
+        
+    strToFind = append and strToFind + ".*?</" or strToFind
 
-    if append:
-        start = html.find(strToFind)
-    else:
-        start = html.find(strToFind) + len(strToFind)
+    match = re.search(strToFind, html, re.I)
+    start = append and (match.end() - 2) or match.end()
 
     return html[:start] + content + html[start:]
     
@@ -91,43 +84,56 @@ def lowerTags(html):
         html = html.replace(item, item.lower())
     return html
 
+def getContent(filename, options):
+    
+    try:
+        with open(filename) as source:
+            return option.clean and stripFluff(source.read()) or source.read()
+    except IOError:
+        print "file does not exist, or path is incorrect"
+        print usage
+        sys.exit(2)
+
+def htmlInsert(sourcename, destname, options):
+    contentstring = getContent(sourcename, options)
+
+    with open(destname, 'r+') as dest:
+        htmlstring = dest.read()
+
+        htmlstring = options.title and addContent(options.title, htmlstring, "<title>") or htmlstring
+        htmlstring = options.head and addContent(options.head, htmlstring, "<h1>") or htmlstring
+
+        if options.append:
+            htmlstring = addContent(contentstring, htmlstring, options.location, append=True)
+        else:
+            htmlstring = addContent(contentstring, htmlstring, options.location, append=False)
+
+def main():
+    parser = OptionParser(usage=usage)
+    parser.add_option("-c", "--clean", action="store_true", dest="clean", default=False,
+                      help="cleanup the html of the source file before insertion")
+    
+    parser.add_option("-d", "--dohead", dest="dohead", metavar="head", default="",
+                      help="insert the file name minus extension into the first h1 tag")
+
+    parser.add_option("-t", "--title", dest="title", metavar="title", default="",
+                      help="insert the file name minus extension into the title attribute")
+
+    parser.add_option("-l", "--location", dest="location", default="content",
+                      help="specify an alternate location to insert content using id, or tagname,\
+                      default is 'content'", metavar="SELECTOR")
+
+    parser.add_option("-a", "--append", action="store_true", dest="append",
+                      default=False, help="change mode to append content")
+
+    (opts, args) = parser.parse_args()
+
+    if len(args) != 2:
+        print usage
+        sys.exit(2)
+
+    htmlInsert(args[0], args[1], opts)
+
+
 if __name__ == "__main__":
-
-    contentpath = os.path.join(os.getcwd(), sys.argv[1])
-    htmlpath = os.path.join(os.getcwd(), sys.argv[2])
-
-    with open(contentpath) as content:
-        with open(htmlpath, 'r+') as html:
-
-            contentstring = stripFluff(content.read())
-            htmlstring = html.read()
-
-            if htmlpath.find('content') == -1:
-                headername = os.path.splitext(sys.argv[2])[0]
-                headername = headername.capitalize() + ' '
-
-                if sys.argv[3] == 'dohead':
-                    if headername.lower() != 'index ':
-
-                        htmlstring = addContent(headername, htmlstring, "<title>")
-                        htmlstring = addContent(headername, htmlstring, "sectiontitle")
-                    else:
-                        htmlstring = addContent('Home', htmlstring, "sectiontitle")
-
-                writestring = addContent(contentstring, htmlstring)
-
-            else:
-                headername = os.path.splitext(sys.argv[1])[0]
-                headername = headername[:headername.find('content')]
-
-                if sys.argv[3] == 'append':
-                    htmlstring = addContent(contentstring, htmlstring, "</body>", True)
-                else:
-                    htmlstring = addContent(contentstring, htmlstring, headername)
-
-                writestring = htmlstring                    
-            
-            html.seek(0, 0)
-            html.write(writestring)
-
-            
+    main()
