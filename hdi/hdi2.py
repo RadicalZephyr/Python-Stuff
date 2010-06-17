@@ -90,6 +90,15 @@ def lowerTags(html):
     return html
 
 def openAnything(source):
+
+
+    import urllib
+    try:
+        return urllib.urlopen(source)
+    except (IOError, OSError):
+
+   
+
     try:
         return open(source)
     except (IOError, OSError):

@@ -17,19 +17,30 @@ imageformats = [".jpg", ".png", ".gif", ".jpeg"]
 def makeFolderPage(folderpath, options):
     root, dirs, files = os.walk(folderpath).next()
     root = os.path.split(root)[1]
+
     htmlstring = """<body><div id="projectDetails"><p><a href="#description">Project Details</a></p>
     <div id="description"></div></div>
     <div id="navbar">
-    """
+
+
+
+
+
 
     for file in files:
         if os.path.splitext(file)[1] in imageformats:
             htmlstring = htmlstring + """<a href="{0}{1}/{2}" rel="enlargeimage::mouseover" rev="loadarea">
         <img src="{0}{1}/{2}" alt="" width="75px" height="67px" /></a>""".format(options.relpath, root, file)
 
+
     htmlstring = htmlstring + """</div>
   <div id="loadarea"><img src="{0}{1}/main.jpg" alt="" name="main" alt="Continuum Gardens" />
   </div></body>""".format(options.relpath, root)
+=======
+    htmlstring = htmlstring + """</div><div id="outload">
+  <div id="loadarea"><img src="{0}{1}/main.jpg" alt="" name="main" alt="Continuum Gardens" />
+  </div></div></body>""".format(options.relpath, root)
+>>>>>>> origin/master
 
     with open("{0}{1}content.html".format(options.head, root), 'w') as fpage:
         fpage.write(htmlstring)
